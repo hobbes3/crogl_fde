@@ -47,6 +47,7 @@ cd ~/Documents/
 git clone https://github.com/hobbes3/crogl_fde.git
 
 # Step 6
+pyenv install 3.13.4
 pyenv local 3.13.4
 
 # Step 7
