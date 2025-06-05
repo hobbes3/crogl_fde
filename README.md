@@ -1,7 +1,7 @@
 # Github Advisory Database for Crogl
 
 ## What does this do?
-This script will download from the [GitHub's Advisory Database](https://github.com/advisories) via their respective [advisory-database project](https://github.com/github/advisory-database).
+This script will download from the [GitHub's Advisory Database](https://github.com/advisories) via their respective [advisory-database project](https://github.com/github/advisory-database). The script will create a new folder called `github_advisory_database` and clone the entire project there.
 
 ## Requirements
 - Python 3.13.4*
