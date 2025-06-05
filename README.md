@@ -15,7 +15,7 @@ Run the main script: `python get_advisories.py`
 
 Note that it may take up to 15 minutes to complete downloading and resolving all the GitHub files depending on your internet speed.
 
-## Example usage for MacOS (for beginners)
+## Example installation and usage for MacOS (for beginners)
 Major steps:
 
 1. Install [Homebrew](https://brew.sh/)
@@ -27,6 +27,7 @@ Major steps:
 7. Install Python dependencies via `pip`
 8. Run the script
 
+Terminal inputs:
 ```
 # Follow/confirm all prompts, especially in step 1
 # Step 1
@@ -56,5 +57,5 @@ pip install -r requirements.txt
 python get_advisories.py
 ```
 
-## Thanks
-I copied code from `lcnittl`'s answer on Stack Overflow for the `git clone` pretty progress bar.
+## Thanks and Credit
+I copied code from [lcnittl's answer](https://stackoverflow.com/a/71285627) on Stack Overflow for the `git clone` pretty progress bar.
