@@ -19,7 +19,7 @@ Note that it may take up to 15 minutes to complete downloading and resolving all
 Major steps:
 
 1. Install [Homebrew](https://brew.sh/)
-2. Install [pyenv](https://github.com/pyenv/pyenv?tab=readme-ov-file#homebrew-in-macos)
+2. Install [Pyenv](https://github.com/pyenv/pyenv?tab=readme-ov-file#homebrew-in-macos)
 3. Install [Git](https://git-scm.com/downloads/mac)
 4. Change directory to where you want download this project, for example your `Documents` folder
 5. Download/clone this project via `git`
