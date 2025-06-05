@@ -6,7 +6,7 @@ This script will download from the [GitHub's Advisory Database](https://github.c
 ## Requirements
 - Python 3.13.4*
 - Python dependencies; install via `pip install -r requirements.txt`
-- ~4 GB of space (~3.2 GB of raw JSON from the `advisory-database` project)
+- ~5 GB of space (~4.77 GB of raw JSON from the `advisory-database` project)
 
 *I wrote this project in Python 3.13.4, but other versions of Python 3 should still work. I recommend [`pyenv`](https://github.com/pyenv/pyenv) to manage different Python versions on your system.
 
