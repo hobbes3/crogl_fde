@@ -47,7 +47,12 @@ if csv_path.is_dir():
 print(f"Creating new {csv_folder} folder.")
 csv_path.mkdir(parents=True, exist_ok=True)
 
-for file in Path(advisories_path).rglob("*.json"):
+files = list(Path(advisories_path).rglob("*.json"))
+if len(files) == 0:
+    print("No advisories in {project_folder} folder. Download advisories by rerunning the program with --download.")
+    exit()
+
+for file in files:
     print(file)
     data = json.load(open(file, "r"))
     severity = data["database_specific"]["severity"]
