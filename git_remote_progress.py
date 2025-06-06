@@ -6,7 +6,7 @@ from __future__ import annotations
 import git
 from rich import console, progress
 
-class GitRemoteProgress(git.RemoteProgress):
+class CloneProgress(git.RemoteProgress):
     OP_CODES = [
         "BEGIN",
         "CHECKING_OUT",

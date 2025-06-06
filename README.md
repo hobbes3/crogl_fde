@@ -8,12 +8,12 @@ This script will download from the [GitHub's Advisory Database](https://github.c
 - Python dependencies; install via `pip install -r requirements.txt`
 - ~5 GB of space (~4.77 GB of raw JSON from the `advisory-database` project)
 
-*I wrote this project in Python 3.13.4, but other versions of Python 3 should still work. I recommend [`pyenv`](https://github.com/pyenv/pyenv) to manage different Python versions on your system.
+*I wrote this project in Python 3.13.4, but other versions of Python 3 may still work. I recommend [`pyenv`](https://github.com/pyenv/pyenv) to manage different Python versions on your system.
 
 ## Usage
-Run the main script: `python get_advisories.py`
+See the help file message: `python get_advisories.py --help`
 
-Note that it may take up to 15 minutes to complete downloading and resolving all the GitHub files depending on your internet speed.
+Note that for `--download`, it may take over 15 minutes to complete downloading and resolving all the GitHub files depending on your internet speed.
 
 ## Example installation and usage for MacOS (for beginners)
 Major steps:
@@ -27,7 +27,7 @@ Major steps:
 7. Install Python dependencies via `pip`
 8. Run the script
 
-Terminal inputs:
+Open the Terminal app and enter each command (lines that start with `#` are comments don't need to be entered):
 ```
 # Follow/confirm all prompts, especially in step 1
 # Step 1
@@ -55,7 +55,7 @@ pip install --upgrade pip
 pip install -r requirements.txt
 
 # Step 8
-python get_advisories.py
+python get_advisories.py --download
 ```
 
 ## Thanks and Credit
