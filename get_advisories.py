@@ -1,14 +1,17 @@
-import pandas
 import argparse
+import json
+import shutil
+import pandas as pd
 from git import Repo
 from git_remote_progress import CloneProgress
 from pathlib import Path
 
 project_url = "https://github.com/github/advisory-database"
 project_folder = "github_advisory_database"
+csv_folder = "csv"
 
 # Command line arguments
-parser = argparse.ArgumentParser(description="Download and simplify the GitHub Advisory Database to CSV.")
+parser = argparse.ArgumentParser(description="Download the GitHub Advisory Database and organize by severity to CSV.")
 parser.add_argument("-d", "--download", action="store_true",
                     help="Download the entire advisories via git clone. This may take over 15 minutes."
                     )
@@ -36,5 +39,24 @@ elif args.update:
 
 advisories_path = project_folder + "/advisories/github-reviewed/2025/06/"
 
+# Create csv folder
+csv_path = Path(csv_folder)
+if csv_path.is_dir():
+    print(f"Deleting existing {csv_folder} folder and its content.")
+    shutil.rmtree(csv_path)
+print(f"Creating new {csv_folder} folder.")
+csv_path.mkdir(parents=True, exist_ok=True)
+
 for file in Path(advisories_path).rglob("*.json"):
     print(file)
+    data = json.load(open(file, "r"))
+    severity = data["database_specific"]["severity"]
+    csv_file = csv_folder + "/" + severity + ".csv"
+
+    df = pd.json_normalize(data)
+
+    if Path(csv_file).exists():
+        df.to_csv(csv_file, index=False, header=False, mode="a")
+    else:
+        df.to_csv(csv_file, index=False, header=True)
+
