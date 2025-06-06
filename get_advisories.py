@@ -1,6 +1,7 @@
 import argparse
 import json
 import shutil
+import requests
 import pandas as pd
 from git import Repo
 from git_remote_progress import CloneProgress
@@ -37,9 +38,10 @@ elif args.update:
     Repo(project_folder).git.pull()
     print("Done")
 
-advisories_path = project_folder + "/advisories/github-reviewed/2025/06/"
+#advisories_path = project_folder + "/advisories/github-reviewed/2025/06/"
+advisories_path = project_folder + "/advisories/github-reviewed/"
 
-# Create csv folder
+# Delete and create the csv folder.
 csv_path = Path(csv_folder)
 if csv_path.is_dir():
     print(f"Deleting existing {csv_folder} folder and its content.")
@@ -47,14 +49,32 @@ if csv_path.is_dir():
 print(f"Creating new {csv_folder} folder.")
 csv_path.mkdir(parents=True, exist_ok=True)
 
+print("Downloading the Known Exploited Vulnerabilities Catalog from cisa.gov.")
+kev = requests.get("https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json").json()["vulnerabilities"]
+print("Found {} vulnerabilities.".format(len(kev)))
+
+# Make a simple list containing cveID only. This will make searching more efficient later.
+cve_list = []
+for k in kev:
+    cve_list.append(k["cveID"])
+
 files = list(Path(advisories_path).rglob("*.json"))
 if len(files) == 0:
     print("No advisories in {project_folder} folder. Download advisories by rerunning the program with --download.")
     exit()
 
 for file in files:
-    print(file)
+    #print(file)
     data = json.load(open(file, "r"))
+
+    # Manually add "withdrawn" key, otherwise the csv headers gets misaligned.
+    data["withdrawn"] = data["withdrawn"] if "withdrawn" in data else None
+
+    # Check for KEV.
+    cve = data["aliases"][0] if data["aliases"] else None
+    data["KEV"] = 1 if cve in cve_list else 0
+    #if data["KEV"] == 1:
+    #    print(f"{file}: Found KEV!")
     severity = data["database_specific"]["severity"]
     csv_file = csv_folder + "/" + severity.lower() + ".csv"
 
