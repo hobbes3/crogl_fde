@@ -1,7 +1,11 @@
 # Github Advisory Database for Crogl
 
 ## What does this do?
-This script will download from the [GitHub's Advisory Database](https://github.com/advisories) via their respective [advisory-database project](https://github.com/github/advisory-database). The script will create a new folder called `github_advisory_database` and clone the entire project there.
+This script will download from the [GitHub's Advisory Database](https://github.com/advisories) via their respective [advisory-database project](https://github.com/github/advisory-database). The script will create a new folder called `github_advisory_database` and download or update the entire project there.
+
+The script will also download the CISA's [Known Exploited Vulnerabilities Catalog](https://www.cisa.gov/known-exploited-vulnerabilities-catalog) (KEV) and for each advisory, it will cross-check against the KEV and denote if it finds a match.
+
+The script will create another folder called `csv` and each advisory will be appened to a CSV file based on severity. Lastly, the CSV files will be compressed and zipped.
 
 ## Requirements
 - Python 3.13.4*
@@ -11,7 +15,7 @@ This script will download from the [GitHub's Advisory Database](https://github.c
 *I wrote this project in Python 3.13.4, but other versions of Python 3 may still work. I recommend [`pyenv`](https://github.com/pyenv/pyenv) to manage different Python versions on your system.
 
 ## Usage
-See the help file message: `python get_advisories.py --help`
+See the help message: `python get_advisories.py --help`
 
 Note that for `--download`, it may take over 15 minutes to complete downloading and resolving all the GitHub files depending on your internet speed.
 

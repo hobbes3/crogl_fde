@@ -41,15 +41,21 @@ elif args.update:
     Repo(project_folder).git.pull()
     print("Done")
 
-advisories_path = project_folder + "/advisories/github-reviewed/2025/06/"
-#advisories_path = project_folder + "/advisories/github-reviewed/"
+#advisories_path = project_folder + "/advisories/github-reviewed/2025/06/"
+advisories_path = project_folder + "/advisories/"
+
+print("Searching for all advisories...")
+advisories = list(Path(advisories_path).rglob("*.json"))
+if len(advisories) == 0:
+    print("No advisories in {project_folder} folder. Download advisories by rerunning the program with --download.")
+    exit()
+print("Found {} advisories.".format(len(advisories)))
 
 # Delete and create the CSV folder.
+print(f"Clearing the existing CSV folder.")
 csv_path = Path(csv_folder)
 if csv_path.is_dir():
-    print(f"Deleting existing {csv_folder} folder and its content.")
     shutil.rmtree(csv_path)
-print(f"Creating new {csv_folder} folder.")
 csv_path.mkdir(parents=True, exist_ok=True)
 
 print("Downloading the Known Exploited Vulnerabilities Catalog from cisa.gov.")
@@ -61,14 +67,9 @@ cve_list = []
 for k in kev:
     cve_list.append(k["cveID"])
 
-files = list(Path(advisories_path).rglob("*.json"))
-if len(files) == 0:
-    print("No advisories in {project_folder} folder. Download advisories by rerunning the program with --download.")
-    exit()
-
-for file in files:
-    #print(file)
-    data = json.load(open(file, "r"))
+for advisory in advisories:
+    print(advisory)
+    data = json.load(open(advisory, "r"))
 
     # Manually add the "withdrawn" key because most advisories don't have this key and the CSV headers will get misaligned otherwise.
     data["withdrawn"] = data["withdrawn"] if "withdrawn" in data else None
@@ -76,9 +77,7 @@ for file in files:
     # Check for KEV.
     cve = data["aliases"][0] if data["aliases"] else None
     data["KEV"] = 1 if cve in cve_list else 0
-    #if data["KEV"] == 1:
-    #    print(f"{file}: Found KEV!")
-    severity = data["database_specific"]["severity"]
+    severity = data["database_specific"]["severity"] or "undefined"
     csv_file = csv_folder + "/" + severity.lower() + ".csv"
 
     df = pd.json_normalize(data)
@@ -90,8 +89,8 @@ for file in files:
 
 csv_severities = Path(csv_folder).glob("*.csv")
 
-for file in csv_severities:
-    severity = str(file).split(".")[0]
-    print(f"Zipping {severity}.csv and deleting the csv.")
-    zipfile.ZipFile(f"{severity}.zip", 'w', zipfile.ZIP_DEFLATED).write(file, arcname=os.path.basename(file))
-    file.unlink()
+for csv_severity in csv_severities:
+    severity = str(csv_severity).split(".")[0]
+    print(f"Zipping {severity}.csv and deleting the original CSV.")
+    zipfile.ZipFile(f"{severity}.zip", 'w', zipfile.ZIP_DEFLATED).write(csv_severity, arcname=os.path.basename(csv_severity))
+    csv_severity.unlink()
