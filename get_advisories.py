@@ -56,7 +56,7 @@ for file in files:
     print(file)
     data = json.load(open(file, "r"))
     severity = data["database_specific"]["severity"]
-    csv_file = csv_folder + "/" + severity + ".csv"
+    csv_file = csv_folder + "/" + severity.lower() + ".csv"
 
     df = pd.json_normalize(data)
 
