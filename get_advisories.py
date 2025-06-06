@@ -22,6 +22,9 @@ parser.add_argument("-d", "--download", action="store_true",
 parser.add_argument("-u", "--update", action="store_true",
                     help="Download only new and updated advisories via git pull."
                     )
+parser.add_argument("-x", "--debug", action="store_true",
+                    help="Debug mode. More debug messages. Only test a small portion of the advisories."
+                    )
 args = parser.parse_args()
 
 if args.download and args.update:
@@ -41,8 +44,10 @@ elif args.update:
     Repo(project_folder).git.pull()
     print("Done")
 
-#advisories_path = project_folder + "/advisories/github-reviewed/2025/06/"
-advisories_path = project_folder + "/advisories/"
+if args.debug:
+    advisories_path = project_folder + "/advisories/github-reviewed/2025/06/"
+else:
+    advisories_path = project_folder + "/advisories/"
 
 print("Searching for all advisories...")
 advisories = list(Path(advisories_path).rglob("*.json"))
@@ -68,7 +73,7 @@ for k in kev:
     cve_list.append(k["cveID"])
 
 for advisory in advisories:
-    print(advisory)
+    if args.debug: print(advisory)
     data = json.load(open(advisory, "r"))
 
     # Manually add the "withdrawn" key because most advisories don't have this key and the CSV headers will get misaligned otherwise.
