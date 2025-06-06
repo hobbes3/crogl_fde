@@ -2,6 +2,9 @@ import argparse
 import json
 import shutil
 import requests
+import zipfile
+import re
+import os
 import pandas as pd
 from git import Repo
 from git_remote_progress import CloneProgress
@@ -38,10 +41,10 @@ elif args.update:
     Repo(project_folder).git.pull()
     print("Done")
 
-#advisories_path = project_folder + "/advisories/github-reviewed/2025/06/"
-advisories_path = project_folder + "/advisories/github-reviewed/"
+advisories_path = project_folder + "/advisories/github-reviewed/2025/06/"
+#advisories_path = project_folder + "/advisories/github-reviewed/"
 
-# Delete and create the csv folder.
+# Delete and create the CSV folder.
 csv_path = Path(csv_folder)
 if csv_path.is_dir():
     print(f"Deleting existing {csv_folder} folder and its content.")
@@ -67,7 +70,7 @@ for file in files:
     #print(file)
     data = json.load(open(file, "r"))
 
-    # Manually add "withdrawn" key, otherwise the csv headers gets misaligned.
+    # Manually add the "withdrawn" key because most advisories don't have this key and the CSV headers will get misaligned otherwise.
     data["withdrawn"] = data["withdrawn"] if "withdrawn" in data else None
 
     # Check for KEV.
@@ -85,3 +88,10 @@ for file in files:
     else:
         df.to_csv(csv_file, index=False, header=True)
 
+csv_severities = Path(csv_folder).glob("*.csv")
+
+for file in csv_severities:
+    severity = str(file).split(".")[0]
+    print(f"Zipping {severity}.csv and deleting the csv.")
+    zipfile.ZipFile(f"{severity}.zip", 'w', zipfile.ZIP_DEFLATED).write(file, arcname=os.path.basename(file))
+    file.unlink()
