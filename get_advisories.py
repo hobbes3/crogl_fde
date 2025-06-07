@@ -10,6 +10,7 @@ import pandas
 import logging
 import logging.handlers
 import time
+from colorama import Fore, Style
 from git import Repo
 from pathlib import Path
 from rich.progress import Progress
@@ -75,65 +76,79 @@ if __name__ == '__main__':
                         help="Debug mode. More debug messages. Only test a small portion of the advisories."
                         )
     args = parser.parse_args()
+    pool = Pool(args.threads)
 
-    if args.debug:
-        logger.setLevel(logging.DEBUG)
-        logger.debug("DEBUG MODE ON!")
+    logger.info(Fore.BLUE + "Press ctrl-c to cancel at anytime..." + Style.RESET_ALL)
 
-    if args.download and args.update:
-        logger.warning("You cannot choose both --download and --update options.")
-        logger.info("Exiting.")
-        exit()
-    elif args.download:
-        logger.info("Cloning Git repository 'advisory-database'...")
-        logger.info("Press ctrl-c to cancel.")
-        Repo.clone_from(
-                url=project_url,
-                to_path=project_folder,
-                progress=CloneProgress()
-                )
-        logger.info("Done.")
-    elif args.update:
-        logger.info("Pulling changes from the Git repository 'advisory-database'...")
-        Repo(project_folder).git.pull()
-        logger.info("Done")
+    try:
+        if args.debug:
+            logger.setLevel(logging.DEBUG)
+            logger.debug("DEBUG MODE ON!")
 
-    if args.debug:
-        logger.debug("Only grabbing a small list of advisories.")
-        advisories_path = project_folder + "/advisories/github-reviewed/2022/05/"
-    else:
-        advisories_path = project_folder + "/advisories/"
+        if args.download and args.update:
+            logger.warning("You cannot choose both --download and --update options.")
+            logger.info("Exiting.")
+            exit()
+        elif args.download:
+            logger.info("Cloning Git repository 'advisory-database'...")
+            Repo.clone_from(
+                    url=project_url,
+                    to_path=project_folder,
+                    progress=CloneProgress()
+                    )
+            logger.info("Done.")
+        elif args.update:
+            logger.info("Pulling changes from the Git repository 'advisory-database'...")
+            Repo(project_folder).git.pull()
+            logger.info("Done")
 
-    logger.info("Searching for all advisories...")
-    advisories = list(Path(advisories_path).rglob("*.json"))
-    if len(advisories) == 0:
-        logger.warning("No advisories in {project_folder} folder. Download advisories by rerunning the program with --download.")
-        exit()
-    logger.info("Found {} advisories.".format(len(advisories)))
+        if args.debug:
+            logger.debug("Only grabbing a small list of advisories.")
+            advisories_path = project_folder + "/advisories/github-reviewed/2022/05/"
+        else:
+            advisories_path = project_folder + "/advisories/"
+
+        logger.info("Searching for all advisories...")
+
+        #file_path = Path(advisories_path).expanduser()
+        #ESTIMATED_TOTAL = 30000
+
+        #with Progress(transient=True) as progress:
+        #    task = progress.add_task("Finding json files...", total=ESTIMATED_TOTAL)
+        #    advisories: list[Path] = []
+        #    for file in file_path.rglob("*.json"):
+        #        progress.advance(task)
+        #        advisories.append(file)
+        #    print("Found", len(files), "files")
+
+
+        advisories = list(Path(advisories_path).rglob("*.json"))
+        if len(advisories) == 0:
+            logger.warning("No advisories in {project_folder} folder. Download advisories by rerunning the program with --download.")
+            exit()
+        logger.info("Found {} advisories.".format(len(advisories)))
 
 # Delete and create the CSV folder.
-    logger.info(f"Clearing the existing CSV folder.")
-    csv_path = Path(csv_folder)
-    if csv_path.is_dir():
-        shutil.rmtree(csv_path)
-    csv_path.mkdir(parents=True, exist_ok=True)
+        logger.info(f"Clearing the existing CSV folder.")
+        csv_path = Path(csv_folder)
+        if csv_path.is_dir():
+            shutil.rmtree(csv_path)
+        csv_path.mkdir(parents=True, exist_ok=True)
 
-    logger.info("Downloading the Known Exploited Vulnerabilities Catalog from cisa.gov.")
-    kev = requests.get("https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json").json()["vulnerabilities"]
-    logger.info("Found {} vulnerabilities.".format(len(kev)))
+        logger.info("Downloading the Known Exploited Vulnerabilities Catalog from cisa.gov.")
+        kev = requests.get("https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json").json()["vulnerabilities"]
+        logger.info("Found {} vulnerabilities.".format(len(kev)))
 
 # Make a simple list containing cveID only. This will make searching more efficient later.
-    cve_list = []
-    for k in kev:
-        cve_list.append(k["cveID"])
+        cve_list = []
+        for k in kev:
+            cve_list.append(k["cveID"])
 
-    pool = Pool(args.threads)
-    try:
         pool.imap_unordered(add_to_csv, advisories)
         pool.close()
         pool.join()
     except KeyboardInterrupt:
-        logger.warning("\nCaught KeyboardInterrupt! Terminating workers and cleaing up. Please wait...")
+        logger.warning(Fore.RED + "Caught KeyboardInterrupt! Terminating workers and cleaing up. Please wait..." + Style.RESET_ALL)
         pool.terminate()
         pool.join()
     finally:
