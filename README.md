@@ -22,14 +22,14 @@ Note that for `--download`, it may take over 15 minutes to complete downloading 
 ## Example installation and usage for MacOS (for beginners)
 Major steps:
 
-1. Install [Homebrew](https://brew.sh/)
-2. Install [Pyenv](https://github.com/pyenv/pyenv?tab=readme-ov-file#homebrew-in-macos)
-3. Install [Git](https://git-scm.com/downloads/mac)
-4. Change directory to where you want download this project, for example your `Documents` folder
-5. Download/clone this project via `git`
-6. Install Python 3.13.4 via `pyenv` and select Python 3.13.4 locally
-7. Install Python dependencies via `pip`
-8. Run the script
+1. Install [Homebrew](https://brew.sh/).
+2. Install [Pyenv](https://github.com/pyenv/pyenv?tab=readme-ov-file#homebrew-in-macos).
+3. Install [Git](https://git-scm.com/downloads/mac).
+4. Change directory to where you want download this project, for example your `Documents` folder.
+5. Download/clone this project via `git`. Change to the project directory.
+6. Install Python 3.13.4 via `pyenv` and select Python 3.13.4 locally.
+7. Install Python dependencies via `pip`.
+8. Run the script.
 
 Open the Terminal app and enter each command (lines that start with `#` are comments don't need to be entered):
 ```
@@ -49,6 +49,7 @@ cd ~/Documents/
 
 # Step 5
 git clone https://github.com/hobbes3/crogl_fde.git
+cd crogl_fde/
 
 # Step 6
 pyenv install 3.13.4
