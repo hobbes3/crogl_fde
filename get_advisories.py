@@ -17,39 +17,12 @@ from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
 from git_remote_progress import CloneProgress
 from multiprocessing.dummy import Pool
 
-def zip_and_delete_csv():
-    csv_severities = Path(csv_folder).glob("*.csv")
-    for csv_severity in csv_severities:
-        severity = str(csv_severity).split(".")[0]
-        logger.info(f"Zipping {severity}.csv and deleting the original CSV.")
-        zipfile.ZipFile(f"{severity}.zip", 'w', zipfile.ZIP_DEFLATED).write(csv_severity, arcname=os.path.basename(csv_severity))
-        csv_severity.unlink()
-
-def add_to_csv(advisory):
-    logger.debug(advisory)
-    data = json.load(open(advisory, "r"))
-
-    # Manually add the "withdrawn" key because most advisories don't have this key and the CSV headers will get misaligned otherwise.
-    data["withdrawn"] = data["withdrawn"] if "withdrawn" in data else None
-
-    # Check for KEV.
-    cve = data["aliases"][0] if data["aliases"] else None
-    data["KEV"] = 1 if cve in cve_list else 0
-    severity = data["database_specific"]["severity"] or "undefined"
-    csv_file = csv_folder + "/" + severity.lower() + ".csv"
-
-    df = pandas.json_normalize(data)
-
-    if Path(csv_file).exists():
-        df.to_csv(csv_file, index=False, header=False, mode="a")
-    else:
-        df.to_csv(csv_file, index=False, header=True)
-
 def get_advisories():
     logger.info(f"Searching for all advisories in {project_folder}/advisories/...")
     advisories = []
 
     with Progress(
+            SpinnerColumn(),
             BarColumn(),
             TextColumn("{task.completed} advisories found."),
             #transient=True
@@ -80,6 +53,34 @@ def get_cve_list():
         cve_list.append(k["cveID"])
 
     return cve_list
+
+def add_to_csv(advisory):
+    logger.debug(advisory)
+    data = json.load(open(advisory, "r"))
+
+    # Manually add the "withdrawn" key because most advisories don't have this key and the CSV headers will get misaligned otherwise.
+    data["withdrawn"] = data["withdrawn"] if "withdrawn" in data else None
+
+    # Check for KEV.
+    cve = data["aliases"][0] if data["aliases"] else None
+    data["KEV"] = 1 if cve in cve_list else 0
+    severity = data["database_specific"]["severity"] or "undefined"
+    csv_file = csv_folder + "/" + severity.lower() + ".csv"
+
+    df = pandas.json_normalize(data)
+
+    if Path(csv_file).exists():
+        df.to_csv(csv_file, index=False, header=False, mode="a")
+    else:
+        df.to_csv(csv_file, index=False, header=True)
+
+def zip_and_delete_csv():
+    csv_severities = Path(csv_folder).glob("*.csv")
+    for csv_severity in csv_severities:
+        severity = str(csv_severity).split(".")[0]
+        logger.info(f"Zipping {severity}.csv and deleting the original CSV.")
+        zipfile.ZipFile(f"{severity}.zip", 'w', zipfile.ZIP_DEFLATED).write(csv_severity, arcname=os.path.basename(csv_severity))
+        csv_severity.unlink()
 
 if __name__ == '__main__':
     script_time_start = time.time()
@@ -112,7 +113,6 @@ if __name__ == '__main__':
                         help="Debug mode. More debug messages. Only test a small portion of the advisories."
                         )
     args = parser.parse_args()
-    pool = Pool(args.threads)
 
     logger.info(Fore.BLUE + "Press ctrl-c to cancel at anytime..." + Style.RESET_ALL)
 
@@ -122,7 +122,7 @@ if __name__ == '__main__':
             logger.debug("DEBUG MODE ON!")
 
         if args.download and args.update:
-            logger.warning("You cannot choose both --download and --update options.")
+            logger.warning(Fore.RED + "You cannot choose both --download and --update options!" + Style.RESET_ALL)
             logger.info("Exiting.")
             exit()
         elif args.download:
@@ -154,6 +154,7 @@ if __name__ == '__main__':
 
         cve_list = get_cve_list()
 
+        pool = Pool(args.threads)
         pool.imap_unordered(add_to_csv, advisories)
         pool.close()
         pool.join()
@@ -163,4 +164,5 @@ if __name__ == '__main__':
         pool.join()
     finally:
         zip_and_delete_csv()
-        logger.info("Done. Total elapsed time: {} seconds".format(time.time() - script_time_start))
+        elapsed_time = "{:.2f}".format(time.time() - script_time_start)
+        logger.info(Fore.GREEN + "Done." + Style.RESET_ALL + f" Total elapsed time: {elapsed_time} seconds.")
