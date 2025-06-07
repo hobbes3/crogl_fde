@@ -13,7 +13,7 @@ import time
 from colorama import Fore, Style
 from git import Repo
 from pathlib import Path
-from rich.progress import Progress
+from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
 from git_remote_progress import CloneProgress
 from multiprocessing.dummy import Pool
 
@@ -110,19 +110,20 @@ if __name__ == '__main__':
 
         logger.info("Searching for all advisories...")
 
-        #file_path = Path(advisories_path).expanduser()
-        #ESTIMATED_TOTAL = 30000
+        advisories = []
 
-        #with Progress(transient=True) as progress:
-        #    task = progress.add_task("Finding json files...", total=ESTIMATED_TOTAL)
-        #    advisories: list[Path] = []
-        #    for file in file_path.rglob("*.json"):
-        #        progress.advance(task)
-        #        advisories.append(file)
-        #    print("Found", len(files), "files")
+        with Progress(
+                SpinnerColumn(),
+                BarColumn(),
+                TextColumn("{task.completed} advisories found."),
+                #transient=True
+                ) as progress:
+            task = progress.add_task("Finding advisories...", total=None)
+            for file in Path(advisories_path).rglob("*.json"):
+                progress.update(task, advance=1)
+                advisories.append(file)
 
-
-        advisories = list(Path(advisories_path).rglob("*.json"))
+        #advisories = list(Path(advisories_path).rglob("*.json"))
         if len(advisories) == 0:
             logger.warning("No advisories in {project_folder} folder. Download advisories by rerunning the program with --download.")
             exit()
