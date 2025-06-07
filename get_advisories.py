@@ -45,6 +45,42 @@ def add_to_csv(advisory):
     else:
         df.to_csv(csv_file, index=False, header=True)
 
+def get_advisories():
+    logger.info(f"Searching for all advisories in {project_folder}/advisories/...")
+    advisories = []
+
+    with Progress(
+            BarColumn(),
+            TextColumn("{task.completed} advisories found."),
+            #transient=True
+            ) as progress:
+        task = progress.add_task("Finding advisories", total=None)
+        for file in Path(advisories_path).rglob("*.json"):
+            progress.update(task, advance=1)
+            advisories.append(file)
+
+    return advisories
+
+def clear_csv_folder():
+    # Delete and create the CSV folder.
+    logger.info(f"Clearing the existing CSV folder.")
+    csv_path = Path(csv_folder)
+    if csv_path.is_dir():
+        shutil.rmtree(csv_path)
+    csv_path.mkdir(parents=True, exist_ok=True)
+
+def get_cve_list():
+    logger.info("Downloading the Known Exploited Vulnerabilities Catalog from cisa.gov.")
+    kev = requests.get("https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json").json()["vulnerabilities"]
+    logger.info("Found {} vulnerabilities.".format(len(kev)))
+
+    # Make a simple list containing cveID only. This will make searching more efficient later.
+    cve_list = []
+    for k in kev:
+        cve_list.append(k["cveID"])
+
+    return cve_list
+
 if __name__ == '__main__':
     script_time_start = time.time()
 
@@ -103,47 +139,20 @@ if __name__ == '__main__':
             logger.info("Done")
 
         if args.debug:
-            logger.debug("Only grabbing a small list of advisories.")
+            logger.debug("Only grabbing only a small list of advisories.")
             advisories_path = project_folder + "/advisories/github-reviewed/2022/05/"
         else:
             advisories_path = project_folder + "/advisories/"
 
-        logger.info("Searching for all advisories...")
+        advisories = get_advisories()
 
-        advisories = []
-
-        with Progress(
-                SpinnerColumn(),
-                BarColumn(),
-                TextColumn("{task.completed} advisories found."),
-                #transient=True
-                ) as progress:
-            task = progress.add_task("Finding advisories...", total=None)
-            for file in Path(advisories_path).rglob("*.json"):
-                progress.update(task, advance=1)
-                advisories.append(file)
-
-        #advisories = list(Path(advisories_path).rglob("*.json"))
         if len(advisories) == 0:
             logger.warning("No advisories in {project_folder} folder. Download advisories by rerunning the program with --download.")
             exit()
-        logger.info("Found {} advisories.".format(len(advisories)))
 
-# Delete and create the CSV folder.
-        logger.info(f"Clearing the existing CSV folder.")
-        csv_path = Path(csv_folder)
-        if csv_path.is_dir():
-            shutil.rmtree(csv_path)
-        csv_path.mkdir(parents=True, exist_ok=True)
+        clear_csv_folder()
 
-        logger.info("Downloading the Known Exploited Vulnerabilities Catalog from cisa.gov.")
-        kev = requests.get("https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json").json()["vulnerabilities"]
-        logger.info("Found {} vulnerabilities.".format(len(kev)))
-
-# Make a simple list containing cveID only. This will make searching more efficient later.
-        cve_list = []
-        for k in kev:
-            cve_list.append(k["cveID"])
+        cve_list = get_cve_list()
 
         pool.imap_unordered(add_to_csv, advisories)
         pool.close()
