@@ -14,8 +14,12 @@ from colorama import Fore, Style
 from git import Repo
 from pathlib import Path
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
+from rich.prompt import Confirm
 from git_remote_progress import CloneProgress
 from multiprocessing.dummy import Pool
+
+def advisories_exist():
+    return Path(project_folder + "/.git").is_dir()
 
 def get_advisories():
     logger.info(f"Searching for all advisories in {project_folder}/advisories/...")
@@ -23,6 +27,7 @@ def get_advisories():
 
     with Progress(
             SpinnerColumn(),
+            TextColumn("Searching..."),
             BarColumn(),
             TextColumn("{task.completed} advisories found."),
             #transient=True
@@ -38,8 +43,7 @@ def clear_csv_folder():
     # Delete and create the CSV folder.
     logger.info(f"Clearing the existing CSV folder.")
     csv_path = Path(csv_folder)
-    if csv_path.is_dir():
-        shutil.rmtree(csv_path)
+    shutil.rmtree(csv_path, ignore_errors=True)
     csv_path.mkdir(parents=True, exist_ok=True)
 
 def get_cve_list():
@@ -115,6 +119,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     logger.info(Fore.BLUE + "Press ctrl-c to cancel at anytime..." + Style.RESET_ALL)
+    pool = Pool(args.threads)
 
     try:
         if args.debug:
@@ -126,17 +131,45 @@ if __name__ == '__main__':
             logger.info("Exiting.")
             exit()
         elif args.download:
-            logger.info("Cloning Git repository 'advisory-database'...")
-            Repo.clone_from(
-                    url=project_url,
-                    to_path=project_folder,
-                    progress=CloneProgress()
-                    )
-            logger.info("Done.")
+            if advisories_exist():
+                warning_msg = "This will delete all existing advisories and download them all again from GitHub."
+            else:
+                warning_msg = "This will download all advisories from GitHub."
+
+            print(Fore.RED + warning_msg + " This could take over 10 minutes." + Style.RESET_ALL)
+
+            answer = Confirm.ask("Do you want to continue?")
+            if answer:
+                logger.info(f"Deleteing {project_folder} folder...")
+                shutil.rmtree(Path(project_folder), ignore_errors=True)
+                logger.info("Cloning Git repository 'advisory-database'...")
+                Repo.clone_from(
+                        url=project_url,
+                        to_path=project_folder,
+                        progress=CloneProgress()
+                        )
+                logger.info("Done.")
+            else:
+                logger.info("Exiting.")
+                exit()
         elif args.update:
-            logger.info("Pulling changes from the Git repository 'advisory-database'...")
-            Repo(project_folder).git.pull()
-            logger.info("Done")
+            if advisories_exist():
+                logger.info("Pulling changes from the Git repository 'advisory-database'...")
+                with Progress(
+                        SpinnerColumn(),
+                        TextColumn("Pulling changes..."),
+                        BarColumn(),
+                    ) as progress:
+                    task = progress.add_task("Pulling changes", total=None)
+                    Repo(project_folder).git.pull()
+                    progress.update(task, advance=1)
+
+                logger.info("Done")
+            else:
+                logger.warning(Fore.RED + "You need to download all advisories first before you can update. Rerun the program with --download option." + Style.RESET_ALL)
+                logger.info("Exiting.")
+                exit()
+
 
         if args.debug:
             logger.debug("Only grabbing only a small list of advisories.")
@@ -147,14 +180,13 @@ if __name__ == '__main__':
         advisories = get_advisories()
 
         if len(advisories) == 0:
-            logger.warning("No advisories in {project_folder} folder. Download advisories by rerunning the program with --download.")
+            logger.warning(Fore.RED + "No advisories in {project_folder} folder. Download advisories by rerunning the program with --download." + Style.RESET_ALL)
             exit()
 
         clear_csv_folder()
 
         cve_list = get_cve_list()
 
-        pool = Pool(args.threads)
         pool.imap_unordered(add_to_csv, advisories)
         pool.close()
         pool.join()
