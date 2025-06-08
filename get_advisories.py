@@ -45,14 +45,15 @@ def get_advisories(advisories_path):
 
 def clear_csv_folder():
     # Delete and create the CSV folder.
-    logger.info(f"Deleting the existing CSV folder.")
     csv_path = Path(csv_folder)
-    shutil.rmtree(csv_path)
+    if csv_path.exists():
+        logger.info(f"Deleting the existing {csv_folder}/ folder.")
+        shutil.rmtree(csv_path)
     csv_path.mkdir(parents=True, exist_ok=True)
 
 def get_cve_list():
     logger.info("Downloading the Known Exploited Vulnerabilities Catalog from cisa.gov.")
-    kev = requests.get("https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json").json()["vulnerabilities"]
+    kev = requests.get(cisa_url).json()["vulnerabilities"]
     logger.info("Found {} vulnerabilities.".format(len(kev)))
 
     # Make a simple list containing cveID only. This will make searching more efficient later.
@@ -107,9 +108,12 @@ if __name__ == '__main__':
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
 
+    # URL sources
     project_url = "https://github.com/github/advisory-database"
+    cisa_url = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
+    # Folder names
     project_folder = "github_advisory_database"
-    csv_folder = "csv"
+    csv_folder = "csv" # Gets overwritten to "csv_test" if it's --test.
 
 # Command line arguments
     parser = argparse.ArgumentParser(
@@ -126,7 +130,7 @@ if __name__ == '__main__':
                         help="Number of workers when appending each advisory JSON to CSV. Can be set to the number of cores on your computer."
                         )
     parser.add_argument("-t", "--test", action="store_true",
-                        help="Test mode. Only test a small sample of advisories that is already included with this project so the program runs in a few seconds."
+                        help="Test mode. Only test a small sample of advisories that is already included with this project so the program runs in a few seconds. Will save to a separate folder called csv_test/."
                         )
     args = parser.parse_args()
 
@@ -141,7 +145,7 @@ if __name__ == '__main__':
             logger.info(Fore.YELLOW + "Download mode detected." + Style.RESET_ALL)
 
             if advisories_exist():
-                logger.warning(f"The {project_folder} folder already exist. Either rerun the program with --update or delete the {project_folder} folder yourself first.")
+                logger.warning(Fore.RED + f"The {project_folder}/ folder already exist." + Style.RESET_ALL + f" Either rerun the program with --update or delete the {project_folder}/ folder yourself first.")
                 exit()
 
             print(Fore.RED + "This will download all advisories from Github. This could take over 10 minutes (downloading about ~3.2 GB)." + Style.RESET_ALL)
@@ -155,35 +159,38 @@ if __name__ == '__main__':
                     to_path=project_folder,
                     progress=CloneProgress()
                     )
-            logger.info("Done.")
         elif args.update:
             logger.info(Fore.YELLOW + "Update mode detected." + Style.RESET_ALL)
             if advisories_exist():
                 logger.info("Pulling changes from the Git repository 'advisory-database'...")
+                repo = Repo(project_folder)
+                before_commit = repo.head.commit
                 with Progress(
                         SpinnerColumn(),
                         TextColumn("Pulling changes..."),
                         BarColumn(),
                     ) as progress:
                     task = progress.add_task("Pulling changes", total=None)
-                    Repo(project_folder).git.pull()
-                    #progress.update(task, advance=1)
-
-                logger.info("Done")
+                    remote = repo.remotes.origin
+                    remote.pull()
+                after_commit = repo.head.commit
+                changed_files_count = len(repo.index.diff(before_commit, after_commit))
+                logger.info(f"{changed_files_count} file(s) changed from git pull.")
             else:
-                logger.warning(Fore.RED + "You need to download all advisories first before you can update. Rerun the program with --download." + Style.RESET_ALL)
+                logger.warning(Fore.RED + "You need to download all advisories first before you can update." + Style.RESET_ALL + " Rerun the program with --download.")
                 exit()
 
         if args.test:
             logger.info(Fore.YELLOW + "Test mode detected." + Style.RESET_ALL)
             advisories_path = "sample_advisories/"
+            csv_folder = "csv_test"
         else:
             advisories_path = project_folder + "/advisories/"
 
         advisories = get_advisories(advisories_path)
 
         if len(advisories) == 0:
-            logger.warning(Fore.RED + f"No advisories found. Rerun the program with --download or --test." + Style.RESET_ALL)
+            logger.warning(Fore.RED + "No advisories found." + Style.RESET_ALL + " Rerun the program with --download or --test.")
             exit()
 
         clear_csv_folder()
@@ -211,7 +218,7 @@ if __name__ == '__main__':
             pool.close()
             pool.join()
     except KeyboardInterrupt:
-        logger.warning(Fore.RED + "Caught KeyboardInterrupt! Terminating workers and cleaing up. Please wait..." + Style.RESET_ALL)
+        logger.warning(Fore.RED + "Caught KeyboardInterrupt!" + Style.RESET_ALL + " Terminating workers and cleaing up. Please wait...")
         pool.terminate()
         pool.join()
     finally:

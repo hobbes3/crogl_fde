@@ -4,3 +4,4 @@ __pycache__/
 
 github_advisory_database/
 csv/
+csv_test/
