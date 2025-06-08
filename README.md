@@ -68,7 +68,9 @@ Example full run with `--download` on MacOS:
 ## Limitations
 If GitHub or CISA ever change the JSON schema, then this entire program can break.
 
-Also, if you want to redownload the advisories, then you must manually delete the `github_advisories_database/` folder since deleting such a large folder (with 25k+ subfolders and files) will take minutes using `shutil.rmtree()` or insecurely via calling the subprocess for `sudo rm -rf` in Python.
+If you want to redownload the advisories, then you must manually delete the `github_advisories_database/` folder since deleting such a large folder (with 25k+ subfolders and files) using Python will take minutes using `shutil.rmtree()` or insecurely via calling the subprocess for `sudo rm -rf`.
+
+Lastly, messing around with `git` commands or manual edits inside `github_advsories_database/` will probably break this program as well. If the program breaks, then try deleting the entire `github_advisories_database/` folder. Or if it's still not working, then delete this entire project folder `crogl_fde/` and reclone the project again.
 
 ## Thanks and Credit
 I copied code from [lcnittl's answer](https://stackoverflow.com/a/71285627) on Stack Overflow for the `git clone` pretty progress bar.
