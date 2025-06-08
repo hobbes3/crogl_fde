@@ -171,8 +171,7 @@ if __name__ == '__main__':
                         BarColumn(),
                     ) as progress:
                     task = progress.add_task("Pulling changes", total=None)
-                    remote = repo.remotes.origin
-                    remote.pull()
+                    pull_info = repo.remotes.origin.pull()
                 after_commit = repo.head.commit
                 changed_files_count = len(repo.index.diff(before_commit, after_commit))
                 logger.info(f"{changed_files_count} file(s) changed from git pull.")
