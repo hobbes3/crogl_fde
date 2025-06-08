@@ -62,6 +62,8 @@ pip install -r requirements.txt
 # Step 8
 python get_advisories.py --download
 ```
+Example full run with `--download` on MacOS:
+![Example run of the program](example_run.jpg)
 
 ## Limitations
 If GitHub or CISA ever change the JSON schema, then this entire program can break.
