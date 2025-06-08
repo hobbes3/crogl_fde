@@ -5,7 +5,7 @@ This script will download from the [GitHub's Advisory Database](https://github.c
 
 The script will also download the CISA's [Known Exploited Vulnerabilities Catalog](https://www.cisa.gov/known-exploited-vulnerabilities-catalog) (KEV) and for each advisory, it will cross-check against the KEV and denote if it finds a match.
 
-The script will create another folder called `csv` and each advisory will be appened to a CSV file based on severity. Lastly, the CSV files will be compressed and zipped.
+The script will create another folder called `csv` and each advisory will be appened to a CSV file based on severity. Lastly, the CSV files will be compressed and zipped (the original CSVs will be deleted).
 
 ## Requirements
 - Python 3.13.4*
@@ -62,6 +62,11 @@ pip install -r requirements.txt
 # Step 8
 python get_advisories.py --download
 ```
+
+## Limitations
+If GitHub or CISA ever change the JSON schema, then this entire program can break.
+
+Also, if you want to redownload the advisories, then you must manually delete the `github_advisories_database/` folder since deleting such a large folder (with 25k+ subfolders and files) will take minutes using `shutil.rmtree()` or insecurely via calling the subprocess for `sudo rm -rf` in Python.
 
 ## Thanks and Credit
 I copied code from [lcnittl's answer](https://stackoverflow.com/a/71285627) on Stack Overflow for the `git clone` pretty progress bar.
