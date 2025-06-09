@@ -117,7 +117,7 @@ if __name__ == '__main__':
 
 # Command line arguments
     parser = argparse.ArgumentParser(
-            description="Download the GitHub Advisory Database and organize by severity to CSV.",
+            description="Download the GitHub's Advisory Database to github_advisory_database/ and cross-check each advisory to CISA's Known Exploited Vulnerabilities Catalog, then finally organize by severity to a zipped CSV files in csv/.",
             formatter_class=argparse.ArgumentDefaultsHelpFormatter
             )
     parser.add_argument("-d", "--download", action="store_true",
@@ -127,10 +127,10 @@ if __name__ == '__main__':
                         help="Download only new and updated advisories via git pull."
                         )
     parser.add_argument("-w", "--workers", type=int, default=4,
-                        help="Number of workers when appending each advisory JSON to CSV. Can be set to the number of cores on your computer."
+                        help="Number of workers when organizing the advisories to CSV. Can be set to the number of cores on your computer."
                         )
     parser.add_argument("-t", "--test", action="store_true",
-                        help="Test mode. Only test a small sample of advisories that is already included with this project so the program runs in a few seconds. Will save to a separate folder called csv_test/."
+                        help="Test mode. Only test a small sample of advisories in sample_advisories/. The CSVs will also save to a separate csv_test/ folder."
                         )
     args = parser.parse_args()
 
