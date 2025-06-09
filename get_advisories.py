@@ -164,7 +164,7 @@ if __name__ == '__main__':
             if advisories_exist():
                 logger.info("Pulling changes from the Git repository 'advisory-database'...")
                 repo = Repo(project_folder)
-                before_commit = repo.head.commit
+                previous_head = repo.head.commit
                 with Progress(
                         SpinnerColumn(),
                         TextColumn("Pulling changes..."),
@@ -172,8 +172,8 @@ if __name__ == '__main__':
                     ) as progress:
                     task = progress.add_task("Pulling changes", total=None)
                     pull_info = repo.remotes.origin.pull()
-                after_commit = repo.head.commit
-                changed_files_count = len(repo.index.diff(before_commit, after_commit))
+                current_head = repo.head.commit
+                changed_files_count = len(previous_head.diff(current_head))
                 logger.info(f"{changed_files_count} file(s) changed from git pull.")
             else:
                 logger.warning(Fore.RED + "You need to download all advisories first before you can update." + Style.RESET_ALL + " Rerun the program with --download.")
