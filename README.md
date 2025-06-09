@@ -62,7 +62,7 @@ pip install -r requirements.txt
 # Step 8
 python get_advisories.py --download
 ```
-Example full run with `--download` on MacOS:
+Example full run with `--download` on MacOS (note my run took about 16 minutes):
 ![Example run of the program](example_run.png)
 
 ## Limitations
